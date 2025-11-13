@@ -1,0 +1,9 @@
+{
+  "name": "MedAI Connect",
+  "description": "An AI-powered triage assistant for rural health workers, providing diagnostic support and generating structured triage summaries to improve patient care in low-resource settings.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone",
+    "camera"
+  ]
+}
