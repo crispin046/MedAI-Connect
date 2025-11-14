@@ -5,6 +5,7 @@ import { AlertTriangleIcon } from './icons/AlertTriangleIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { TrendingUpIcon } from './icons/TrendingUpIcon';
+import { DownloadIcon } from './icons/DownloadIcon';
 
 const StatCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
@@ -70,6 +71,54 @@ export const AnalyticsPage: React.FC = () => {
         };
     }, [referrals]);
 
+    const handleExportData = () => {
+        if (!analyticsData) return;
+
+        const escapeCsvField = (field: string | number) => {
+            const stringField = String(field);
+            if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+                return `"${stringField.replace(/"/g, '""')}"`;
+            }
+            return stringField;
+        };
+
+        let csvContent = "";
+
+        // Summary Stats
+        csvContent += "Metric,Value\n";
+        csvContent += `Total Assessments,${analyticsData.totalAssessments}\n`;
+        csvContent += `High/Critical Cases,${analyticsData.totalCritical}\n`;
+        csvContent += `Most Frequent Condition,${escapeCsvField(analyticsData.mostFrequentCondition)}\n`;
+        csvContent += "\n";
+
+        // Urgency Levels
+        csvContent += "Urgency Level,Count\n";
+        analyticsData.urgencyData.labels.forEach((label, index) => {
+            csvContent += `${escapeCsvField(label)},${analyticsData.urgencyData.values[index]}\n`;
+        });
+        csvContent += "\n";
+
+        // Top Conditions
+        csvContent += "Condition,Count\n";
+        analyticsData.conditionData.labels.forEach((label, index) => {
+            csvContent += `${escapeCsvField(label)},${analyticsData.conditionData.values[index]}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            const date = new Date().toISOString().split('T')[0];
+            link.setAttribute("download", `medai_analytics_${date}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
+
     if (!analyticsData) {
         return (
             <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
@@ -89,7 +138,19 @@ export const AnalyticsPage: React.FC = () => {
 
     return (
         <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Health Analytics Dashboard</h1>
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Health Analytics Dashboard</h1>
+                    <p className="text-gray-600 mt-1">Summary of triage data from current session.</p>
+                </div>
+                <button
+                    onClick={handleExportData}
+                    className="mt-4 sm:mt-0 inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                >
+                    <DownloadIcon className="w-5 h-5" />
+                    Export Data (CSV)
+                </button>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <StatCard title="Total Assessments" value={analyticsData.totalAssessments} icon={<ClipboardIcon className="w-6 h-6"/>} />
